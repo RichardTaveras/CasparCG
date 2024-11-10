@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Plantilla de Loterías</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Roboto:wght@700&display=swap');
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: 'Montserrat', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        .lottery-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center; /* Centrar horizontalmente */
+            align-items: center;     /* Centrar verticalmente */
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .lottery-card {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 2px solid #fff;
+            border-radius: 15px;
+            margin: 10px;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+            color: #fff;
+            position: relative;
+            flex: 1 1 calc(30% - 40px);
+            max-width: calc(30% - 40px);
+            min-width: 280px;
+            transition: background-color 0.5s, color 0.5s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        .lottery-card:hover {
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+        .lottery-name {
+            font-family: 'Roboto', sans-serif;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            opacity: 0;
+            animation-fill-mode: forwards;
+        }
+        .lottery-numbers {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            opacity: 0;
+            animation-fill-mode: forwards;
+        }
+        .lottery-number {
+            background-color: rgba(255, 255, 255, 0.2);
+            border: 2px solid #fff;
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Roboto', sans-serif;
+            font-size: 2.2em;
+            opacity: 0;
+            animation-fill-mode: forwards;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        /* Animaciones */
+        .fade-in {
+            animation: fadeIn 1s forwards;
+        }
+        .fade-in-down {
+            animation: fadeInDown 1s forwards;
+        }
+        .bounce-in {
+            animation: bounceIn 0.6s forwards;
+        }
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes bounceIn {
+            0% { opacity: 0; transform: scale(0.3); }
+            50% { opacity: 1; transform: scale(1.05); }
+            70% { transform: scale(0.95); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        /* Fondo animado */
+        .animated-background {
+            background: linear-gradient(-45deg, #ff0000, #ff7f00, #ffff00, #7fff00, #00ff00, #00ff7f, #00ffff, #007fff, #0000ff, #7f00ff, #ff00ff, #ff007f);
+            background-size: 2400% 2400%;
+            animation: gradientAnimation 60s infinite;
+        }
+        @keyframes gradientAnimation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        /* Efecto de fondo animado al actualizar */
+        .update-effect {
+            animation: updateBackground 3s forwards;
+        }
+        @keyframes updateBackground {
+            0% { background-color: rgba(255, 255, 255, 0.1); }
+            50% { background-color: rgba(255, 215, 0, 0.5); }
+            100% { background-color: rgba(255, 255, 255, 0.1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="lottery-container" id="lottery-container">
+        <!-- Las tarjetas de lotería se generarán dinámicamente aquí -->
+    </div>
+
+    <!-- Efectos de sonido -->
+    <audio id="number-sound" src="number_sound.mp3" preload="auto"></audio>
+
+    <script>
+        // Objeto para almacenar los datos de las loterías
+        var lotteries = {};
+
+        function update(data) {
+            console.log('Datos recibidos en update:', data);
+            try {
+                // Si los datos vienen en formato JSON (cadena), parsearlos
+                if (typeof data === 'string') {
+                    data = JSON.parse(data);
+                }
+
+                // Obtener el ID de la lotería
+                var lotteryId = data.id;
+
+                // Si la tarjeta no existe, crearla
+                if (!lotteries[lotteryId]) {
+                    createLotteryCard(lotteryId, data);
+                }
+
+                // Actualizar los datos de la tarjeta
+                updateLotteryCard(lotteryId, data);
+            } catch (e) {
+                console.error('Error en la función update:', e);
+            }
+        }
+
+        function createLotteryCard(id, data) {
+            var container = document.getElementById('lottery-container');
+
+            var card = document.createElement('div');
+            card.className = 'lottery-card';
+            card.id = 'lottery-' + id;
+
+            var nameElem = document.createElement('div');
+            nameElem.className = 'lottery-name';
+            nameElem.innerText = data.name;
+            card.appendChild(nameElem);
+
+            var numbersContainer = document.createElement('div');
+            numbersContainer.className = 'lottery-numbers';
+            numbersContainer.id = 'numbers-' + id;
+            card.appendChild(numbersContainer);
+
+            container.appendChild(card);
+
+            lotteries[id] = {
+                card: card,
+                nameElem: nameElem,
+                numbersContainer: numbersContainer
+            };
+        }
+
+        function updateLotteryCard(id, data) {
+            var lottery = lotteries[id];
+
+            // Mostrar y animar el nombre
+            lottery.nameElem.classList.remove('fade-in-down');
+            void lottery.nameElem.offsetWidth; // Forzar reflujo
+            lottery.nameElem.classList.add('fade-in-down');
+
+            // Limpiar números anteriores
+            lottery.numbersContainer.innerHTML = '';
+
+            // Dividir los números
+            var numbers = data.numbers.split(' - ');
+
+            // Mostrar y animar los números secuencialmente
+            numbers.forEach(function(number, index) {
+                var numberElem = document.createElement('div');
+                numberElem.className = 'lottery-number';
+                numberElem.innerText = number;
+
+                // Añadir el número al contenedor
+                lottery.numbersContainer.appendChild(numberElem);
+
+                // Retrasar la animación de cada número
+                setTimeout(function() {
+                    numberElem.classList.add('bounce-in');
+                    numberElem.style.opacity = '1';
+
+                    // Reproducir sonido
+                    var sound = document.getElementById('number-sound');
+                    sound.currentTime = 0;
+                    var playPromise = sound.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(function(error) {
+                            console.error('Error al reproducir el audio:', error);
+                        });
+                    }
+                }, index * 4000); // Ajusta el tiempo entre números (1 segundo entre cada uno)
+
+            });
+
+            // Mostrar y animar el contenedor de números
+            lottery.numbersContainer.classList.remove('fade-in');
+            void lottery.numbersContainer.offsetWidth; // Forzar reflujo
+            lottery.numbersContainer.classList.add('fade-in');
+
+            // Aplicar efecto de fondo animado al actualizar
+            lottery.card.classList.add('update-effect');
+
+            // Remover el efecto después de 3 segundos
+            setTimeout(function() {
+                lottery.card.classList.remove('update-effect');
+            }, 3000);
+
+            // Cambiar colores si se especifica
+            if (data.backgroundColor) {
+                lottery.card.style.backgroundColor = data.backgroundColor;
+            }
+            if (data.textColor) {
+                lottery.card.style.color = data.textColor;
+                lottery.card.style.borderColor = data.textColor;
+            }
+
+            // Aplicar fondo animado permanente si está habilitado
+            if (data.animatedBackground === 'true') {
+                lottery.card.classList.add('animated-background');
+            } else {
+                lottery.card.classList.remove('animated-background');
+            }
+        }
+    </script>
+</body>
+</html>
+
+
